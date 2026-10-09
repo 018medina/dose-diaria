@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Dose Diária</title>
+  <meta name="description" content="Controle diário de remédios e suplementos.">
+  <meta name="theme-color" content="#f4f6f5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1412" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Dose Diária">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main id="app">
+    <!-- DIA -->
+    <section class="view" id="view-day" aria-labelledby="day-title">
+      <header class="day-header">
+        <button class="icon-btn" id="day-prev" aria-label="Dia anterior">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="day-heading">
+          <h1 id="day-title">Hoje</h1>
+          <p id="day-sub"></p>
+        </div>
+        <button class="icon-btn" id="day-next" aria-label="Próximo dia">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </header>
+
+      <div class="progress-card" id="progress-card">
+        <div class="ring" id="ring" aria-hidden="true">
+          <svg viewBox="0 0 36 36"><circle class="ring-bg" cx="18" cy="18" r="15.5"/><circle class="ring-fg" id="ring-fg" cx="18" cy="18" r="15.5"/></svg>
+          <span id="ring-label">0/0</span>
+        </div>
+        <div>
+          <strong id="progress-title"></strong>
+          <p id="progress-sub"></p>
+        </div>
+        <button class="chip" id="go-today" hidden>Ir para hoje</button>
+      </div>
+
+      <div id="day-items" class="stack"></div>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section class="view" id="view-history" hidden aria-labelledby="hist-title">
+      <header class="page-header"><h1 id="hist-title">Histórico</h1></header>
+
+      <div class="stats" id="stats"></div>
+
+      <div class="card calendar-card">
+        <div class="cal-nav">
+          <button class="icon-btn" id="cal-prev" aria-label="Mês anterior">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h2 id="cal-title"></h2>
+          <button class="icon-btn" id="cal-next" aria-label="Próximo mês">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+        <div class="cal-grid cal-week" aria-hidden="true">
+          <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="legend">
+          <span><i class="dot full"></i>Completo</span>
+          <span><i class="dot partial"></i>Parcial</span>
+          <span><i class="dot empty"></i>Nada marcado</span>
+        </div>
+      </div>
+
+      <div class="card" id="month-items"></div>
+    </section>
+
+    <!-- AJUSTES -->
+    <section class="view" id="view-settings" hidden aria-labelledby="set-title">
+      <header class="page-header"><h1 id="set-title">Ajustes</h1></header>
+
+      <h2 class="section-title">Itens</h2>
+      <div class="card list" id="items-list"></div>
+      <button class="btn btn-secondary btn-block" id="add-item">+ Adicionar item</button>
+
+      <h2 class="section-title">Lembretes</h2>
+      <div class="card" id="push-card"></div>
+
+      <h2 class="section-title">Backup</h2>
+      <div class="card">
+        <p class="muted small">Seus registros ficam só neste aparelho. Exporte um backup de vez em quando.</p>
+        <p class="small" id="last-backup"></p>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="export-btn">Exportar</button>
+          <button class="btn btn-secondary" id="import-btn">Importar</button>
+        </div>
+        <input type="file" id="import-file" accept="application/json,.json" hidden>
+      </div>
+
+      <p class="muted small center" id="app-version"></p>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Navegação">
+    <button class="tab" data-tab="day" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 9h18M9 15l2 2 4-4"/></svg>
+      <span>Dia</span>
+    </button>
+    <button class="tab" data-tab="history">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+      <span>Histórico</span>
+    </button>
+    <button class="tab" data-tab="settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      <span>Ajustes</span>
+    </button>
+  </nav>
+
+  <!-- Dialog: dose -->
+  <dialog id="dose-dialog" class="sheet">
+    <form method="dialog" id="dose-form">
+      <h2 id="dose-dialog-title">Dose</h2>
+      <p class="muted small" id="dose-dialog-sub"></p>
+      <label class="field">
+        <span>Horário em que tomou <em class="muted">(opcional)</em></span>
+        <input type="time" id="dose-time">
+      </label>
+      <div class="btn-row">
+        <button type="button" class="btn btn-danger" id="dose-unmark">Desmarcar</button>
+        <button type="button" class="btn btn-secondary" id="dose-cancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="dose-save">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Dialog: item -->
+  <dialog id="item-dialog" class="sheet">
+    <form method="dialog" id="item-form">
+      <h2 id="item-dialog-title">Item</h2>
+      <div class="field-row">
+        <label class="field field-emoji">
+          <span>Ícone</span>
+          <input type="text" id="item-emoji" maxlength="8" autocomplete="off">
+        </label>
+        <label class="field">
+          <span>Nome</span>
+          <input type="text" id="item-name" maxlength="40" required autocomplete="off">
+        </label>
+      </div>
+      <label class="field">
+        <span>Doses por dia</span>
+        <select id="item-doses"></select>
+      </label>
+      <fieldset class="field">
+        <legend>Horário do lembrete de cada dose <em class="muted">(vazio = sem lembrete)</em></legend>
+        <div id="item-times" class="times"></div>
+      </fieldset>
+      <p class="muted small" id="item-doses-note" hidden>Mudar a quantidade de doses vale a partir de hoje. Os dias anteriores continuam com a quantidade antiga.</p>
+      <div class="btn-row">
+        <button type="button" class="btn btn-danger" id="item-remove">Remover</button>
+        <button type="button" class="btn btn-secondary" id="item-cancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
