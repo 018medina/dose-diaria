@@ -39,6 +39,14 @@
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
+/* Desliga o zoom por toque duplo do Safari (pinça continua funcionando) */
+html, body, button, a, label, input, select { touch-action: manipulation; }
+/* Botões não selecionam texto nem abrem o menu de "copiar" ao segurar */
+button, .tab, .dose, .cal-day, .list-row {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 body {
   margin: 0;
   background: var(--bg);

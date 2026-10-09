@@ -5,7 +5,7 @@
    O servidor só recebe os horários dos lembretes (push).
    ========================================================= */
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 const STORAGE_KEY = 'dose-diaria:v1';
 const BACKUP_KEY = 'dose-diaria:last-export';
 const MAX_DOSES = 6;
@@ -264,12 +264,18 @@ function renderDay() {
   }).join('');
 }
 
+// Ignora um segundo toque logo depois de marcar (evita marcar e já abrir o "desmarcar")
+let lastMark = { key: '', at: 0 };
+
 function onDoseTap(itemId, index) {
   const k = ui.date;
   const it = state.items.find((x) => x.id === itemId);
   if (!it) return;
+  const tapKey = `${k}|${itemId}|${index}`;
+  if (lastMark.key === tapKey && Date.now() - lastMark.at < 600) return;
   const rec = getRec(k, itemId, index);
   if (!rec && k === dateKey()) {
+    lastMark = { key: tapKey, at: Date.now() };
     setRec(k, itemId, index, { at: nowHM() });
     if (navigator.vibrate) navigator.vibrate(15);
     toast(`${it.emoji} ${it.name} marcado`);
