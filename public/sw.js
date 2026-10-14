@@ -1,5 +1,5 @@
 /* Service worker do Dose Diária: cache offline + notificações push */
-const CACHE = 'dose-diaria-v2';
+const CACHE = 'dose-diaria-v3';
 const ASSETS = [
   '/',
   '/index.html',

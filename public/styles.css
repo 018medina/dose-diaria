@@ -263,3 +263,30 @@ em { font-style: normal; }
   max-width: calc(100% - 32px); text-align: center;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Telas cheias: boas-vindas e aviso do Instagram */
+.overlay {
+  position: fixed; inset: 0; z-index: 30; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background: var(--bg);
+  padding: calc(env(safe-area-inset-top) + 24px) 16px calc(env(safe-area-inset-bottom) + 24px);
+}
+.overlay-body { max-width: 480px; margin: 0 auto; text-align: center; }
+.overlay-body > * + * { margin-top: 16px; }
+.overlay-body .card, .overlay-body .features { text-align: left; }
+.overlay-icon { width: 72px; height: 72px; border-radius: 18px; box-shadow: var(--shadow); }
+.overlay h1 { font-size: 30px; }
+.lead { font-size: 17px; color: var(--muted); }
+.features { list-style: none; padding: 0; margin-left: auto; margin-right: auto; display: grid; gap: 10px; }
+.features li { display: flex; gap: 12px; align-items: center; font-size: 16px; }
+.features span { font-size: 22px; width: 28px; text-align: center; flex: none; }
+.install-card h2 { font-size: 16px; margin-bottom: 8px; }
+.install-card + .privacy-text { padding: 0 4px; }
+.big-steps { font-size: 16px; padding-left: 22px; margin: 0; }
+.big-steps li + li { margin-top: 10px; }
+.kbd {
+  display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 8px;
+  background: var(--surface-2); font-weight: 600; white-space: nowrap;
+}
+.kbd svg { width: 16px; height: 16px; }
+.link-btn { border: 0; background: none; color: var(--muted); text-decoration: underline; font-size: 14px; padding: 12px; }
+.privacy-text { line-height: 1.5; }

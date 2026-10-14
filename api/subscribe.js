@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     const id = subId(subscription.endpoint);
     const exists = await r.sismember(keys.subs, id);
     if (!exists && (await r.scard(keys.subs)) >= MAX_SUBSCRIPTIONS) {
-      return res.status(403).json({ error: 'Limite de aparelhos atingido' });
+      return res.status(403).json({ error: 'As vagas de lembretes estão esgotadas no momento', code: 'limit' });
     }
     await r.set(keys.sub(id), { subscription, timezone: data.timezone, reminders, updatedAt: Date.now() });
     if (!exists) await r.sadd(keys.subs, id);

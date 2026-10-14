@@ -5,7 +5,7 @@
    O servidor só recebe os horários dos lembretes (push).
    ========================================================= */
 
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.1.0';
 const STORAGE_KEY = 'dose-diaria:v1';
 const BACKUP_KEY = 'dose-diaria:last-export';
 const MAX_DOSES = 6;
@@ -505,7 +505,7 @@ async function api(path, body) {
     body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `Erro ${res.status}`);
+  if (!res.ok) throw Object.assign(new Error(data.error || `Erro ${res.status}`), { status: res.status, code: data.code });
   return data;
 }
 
@@ -550,10 +550,28 @@ async function enablePush() {
       if (!cfg.publicKey) throw new Error('Servidor sem chave VAPID configurada');
       sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(cfg.publicKey) });
     }
+    try {
+      await api('/api/subscribe', {
+        subscription: sub.toJSON(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        reminders: buildReminders(),
+      });
+    } catch (e) {
+      if (e.code === 'limit') {
+        // sem vaga no servidor: desfaz a inscrição local para não ficar "meio ativado"
+        await sub.unsubscribe().catch(() => {});
+        state.push.enabled = false;
+        saveState();
+        renderPushCard();
+        alert('As vagas de lembretes estão esgotadas no momento.\n\nO app continua funcionando normalmente, só sem notificações.');
+        return;
+      }
+      throw e;
+    }
     state.push.enabled = true;
+    state.push.pendingSync = false;
     saveState();
-    await syncReminders();
-    if (!state.push.pendingSync) toast('Lembretes ativados');
+    toast('Lembretes ativados');
   } catch (e) {
     console.error(e);
     toast(`Falha ao ativar: ${e.message}`);
@@ -625,6 +643,149 @@ function renderPushCard() {
     <p class="muted small">Receba uma notificação no horário de cada dose. Os horários são definidos em cada item.</p>
     <div class="btn-row"><button class="btn btn-primary" id="push-enable">Ativar lembretes</button></div>`;
 }
+
+/* ---------- uso público: boas-vindas, Instagram, privacidade ---------- */
+const WELCOME_KEY = 'dose-diaria:welcomed';
+const isAndroid = /Android/i.test(navigator.userAgent);
+const SHARE_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+const PLUS_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg>';
+const PRIVACY_TEXT = 'Seus registros ficam só neste aparelho: não tem cadastro, login nem rastreamento. '
+  + 'Se você ativar os lembretes, o servidor guarda apenas o nome de cada item e os horários, para conseguir enviar a notificação. '
+  + 'Ao desativar os lembretes, esses dados são apagados. Se preferir, use nomes genéricos (ex.: "Remédio da manhã").';
+
+/** Navegador interno de apps (Instagram, Facebook, Threads, TikTok...). Devolve o nome do app ou null. */
+function inAppBrowser() {
+  const ua = navigator.userAgent;
+  if (/Instagram/i.test(ua)) return 'Instagram';
+  if (/Barcelona|Threads/i.test(ua)) return 'Threads';
+  if (/FBAN|FBAV|FB_IAB|FBIOS/i.test(ua)) return 'Facebook';
+  if (/musical_ly|BytedanceWebview|TikTok/i.test(ua)) return 'TikTok';
+  if (/\bLine\//i.test(ua)) return 'LINE';
+  return null;
+}
+
+const appUrl = () => `${location.origin}/`;
+
+async function copyLink() {
+  try {
+    await navigator.clipboard.writeText(appUrl());
+    toast('Link copiado');
+  } catch {
+    prompt('Copie o link:', appUrl());
+  }
+}
+
+let deferredInstall = null; // evento beforeinstallprompt (Chrome/Android)
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstall = e;
+  if (!$('#welcome').hidden) renderInstallSteps();
+});
+window.addEventListener('appinstalled', () => { deferredInstall = null; });
+
+function renderInstallSteps() {
+  const box = $('#install-steps');
+  if (isStandalone()) { box.hidden = true; return; }
+  box.hidden = false;
+  if (isIOS) {
+    box.innerHTML = `<h2>Instale no iPhone antes de começar</h2>
+      <ol class="steps big-steps">
+        <li>No <strong>Safari</strong>, toque em <span class="kbd">${SHARE_SVG}Compartilhar</span> <span class="muted">(em algumas versões ele fica dentro do menu <strong>•••</strong>)</span></li>
+        <li>Toque em <span class="kbd">${PLUS_SVG}Adicionar à Tela de Início</span></li>
+        <li>Abra o <strong>Dose Diária</strong> pelo ícone novo</li>
+      </ol>
+      <p class="muted small" style="margin-top:10px">O que você marcar aqui no Safari não passa para o app instalado, e os lembretes só funcionam pelo ícone.</p>`;
+  } else if (isAndroid) {
+    box.innerHTML = `<h2>Instale no Android</h2>
+      ${deferredInstall ? '<button class="btn btn-primary btn-block" id="install-btn" style="margin:4px 0 12px">Instalar app</button><p class="muted small">Ou faça manualmente:</p>' : ''}
+      <ol class="steps big-steps">
+        <li>No <strong>Chrome</strong>, toque em <span class="kbd">⋮</span> no canto superior direito</li>
+        <li>Toque em <strong>Instalar app</strong> <span class="muted">(ou Adicionar à tela inicial)</span></li>
+        <li>Abra o <strong>Dose Diária</strong> pelo ícone novo</li>
+      </ol>`;
+  } else {
+    box.innerHTML = `<h2>Feito para o celular</h2>
+      <p class="muted small">Abra <strong>${esc(location.host)}</strong> no Safari do iPhone ou no Chrome do Android e adicione à tela inicial.</p>
+      ${deferredInstall ? '<button class="btn btn-secondary btn-block" id="install-btn">Instalar neste computador</button>' : ''}`;
+  }
+}
+
+function showWelcome() {
+  renderInstallSteps();
+  $('#welcome').hidden = false;
+  $('#welcome').scrollTop = 0;
+}
+
+function hideWelcome() {
+  $('#welcome').hidden = true;
+  try { localStorage.setItem(WELCOME_KEY, '1'); } catch { /* ignora */ }
+}
+
+function showInAppWarning(appName) {
+  const browser = isIOS ? 'Safari' : 'Chrome';
+  document.querySelectorAll('.browser-name').forEach((el) => { el.textContent = browser; });
+  $('.inapp-name').textContent = appName;
+  $('#inapp-steps').innerHTML = isIOS
+    ? `<li>Toque em <span class="kbd">•••</span> no canto superior direito</li>
+       <li>Escolha <strong>Abrir no navegador externo</strong> <span class="muted">(ou Abrir no Safari)</span></li>`
+    : `<li>Toque em <span class="kbd">⋮</span> no canto superior direito</li>
+       <li>Escolha <strong>Abrir no Chrome</strong> <span class="muted">(ou Abrir no navegador)</span></li>`;
+  $('#inapp').hidden = false;
+}
+
+function openInRealBrowser() {
+  const url = appUrl();
+  if (isIOS) {
+    // iOS 17+: tenta abrir direto no Safari; se não funcionar, os passos na tela continuam valendo
+    location.href = `x-safari-${url}`;
+  } else if (isAndroid) {
+    const noScheme = url.replace(/^https?:\/\//, '');
+    location.href = `intent://${noScheme}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url)};end`;
+  } else {
+    window.open(url, '_blank');
+  }
+}
+
+async function shareApp() {
+  const data = { title: 'Dose Diária', text: 'App gratuito para marcar se você já tomou seu remédio ou suplemento hoje.', url: appUrl() };
+  try {
+    if (navigator.share) await navigator.share(data);
+    else await copyLink();
+  } catch (e) {
+    if (e.name !== 'AbortError') copyLink();
+  }
+}
+
+function initOnboarding() {
+  document.querySelectorAll('.privacy-text').forEach((el) => { el.textContent = PRIVACY_TEXT; });
+  const app = inAppBrowser();
+  if (app && !isStandalone()) {
+    showInAppWarning(app);
+    return;
+  }
+  if (!wasWelcomed()) showWelcome();
+}
+
+function wasWelcomed() {
+  try { return localStorage.getItem(WELCOME_KEY) === '1'; } catch { return false; }
+}
+
+$('#welcome-start').addEventListener('click', hideWelcome);
+$('#install-steps').addEventListener('click', async (e) => {
+  if (!e.target.closest('#install-btn') || !deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice.catch(() => {});
+  deferredInstall = null;
+  renderInstallSteps();
+});
+$('#show-welcome').addEventListener('click', showWelcome);
+$('#share-app').addEventListener('click', shareApp);
+$('#inapp-open').addEventListener('click', openInRealBrowser);
+$('#inapp-copy').addEventListener('click', copyLink);
+$('#inapp-continue').addEventListener('click', () => {
+  $('#inapp').hidden = true;
+  if (!wasWelcomed()) showWelcome();
+});
 
 /* ---------- backup ---------- */
 async function exportBackup() {
@@ -785,4 +946,5 @@ if ('serviceWorker' in navigator) {
 if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
 saveState();
 setTab('day');
+initOnboarding();
 if (state.push.enabled) syncReminders({ silent: true });

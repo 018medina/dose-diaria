@@ -101,6 +101,16 @@
         <input type="file" id="import-file" accept="application/json,.json" hidden>
       </div>
 
+      <h2 class="section-title">Sobre</h2>
+      <div class="card">
+        <p class="small"><strong>Privacidade</strong></p>
+        <p class="muted small privacy-text"></p>
+        <div class="btn-row">
+          <button class="btn btn-secondary" id="show-welcome">Como instalar</button>
+          <button class="btn btn-secondary" id="share-app">Compartilhar</button>
+        </div>
+      </div>
+
       <p class="muted small center" id="app-version"></p>
     </section>
   </main>
@@ -167,6 +177,43 @@
       </div>
     </form>
   </dialog>
+
+  <!-- Boas-vindas / instalação -->
+  <div class="overlay" id="welcome" hidden role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+    <div class="overlay-body">
+      <img src="/icons/icon-192.png" alt="" class="overlay-icon" width="72" height="72">
+      <h1 id="welcome-title">Dose Diária</h1>
+      <p class="lead">Marque cada dose do seu remédio ou suplemento e nunca mais fique na dúvida se já tomou hoje.</p>
+
+      <ul class="features">
+        <li><span aria-hidden="true">✅</span>Um toque para marcar, com o horário salvo</li>
+        <li><span aria-hidden="true">📅</span>Histórico com calendário e dias seguidos</li>
+        <li><span aria-hidden="true">🔔</span>Lembretes no horário de cada dose</li>
+        <li><span aria-hidden="true">🔒</span>Sem cadastro: tudo fica no seu celular</li>
+      </ul>
+
+      <div class="card install-card" id="install-steps"></div>
+
+      <p class="muted small privacy-text"></p>
+
+      <button class="btn btn-primary btn-block" id="welcome-start">Começar</button>
+    </div>
+  </div>
+
+  <!-- Aberto dentro do Instagram/Facebook -->
+  <div class="overlay" id="inapp" hidden role="dialog" aria-modal="true" aria-labelledby="inapp-title">
+    <div class="overlay-body">
+      <img src="/icons/icon-192.png" alt="" class="overlay-icon" width="72" height="72">
+      <h1 id="inapp-title">Abra no <span class="browser-name">navegador</span></h1>
+      <p class="lead">Você está no navegador interno do <span class="inapp-name">Instagram</span>. Por aqui não dá para instalar o app nem receber lembretes, e seus registros podem sumir.</p>
+      <div class="card">
+        <ol class="steps big-steps" id="inapp-steps"></ol>
+      </div>
+      <button class="btn btn-primary btn-block" id="inapp-open">Abrir no <span class="browser-name">navegador</span></button>
+      <button class="btn btn-secondary btn-block" id="inapp-copy">Copiar link</button>
+      <button class="link-btn" id="inapp-continue">Continuar por aqui mesmo assim</button>
+    </div>
+  </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

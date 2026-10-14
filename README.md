@@ -105,6 +105,13 @@ Requer **iOS 16.4 ou superior**.
 
 ---
 
+## Compartilhando com outras pessoas
+
+- Na primeira abertura aparece uma tela de boas-vindas com o passo a passo de instalação (iPhone ou Android) e a nota de privacidade. Ela pode ser reaberta em **Ajustes › Sobre › Como instalar**.
+- Quem abre o link pelo Instagram, Facebook, Threads ou TikTok cai no navegador interno desses apps, onde não dá para instalar nem receber lembretes. O app detecta isso e mostra como abrir no Safari ou no Chrome.
+- Cada pessoa tem seus próprios dados no próprio celular. Ninguém vê os registros de ninguém, nem você.
+- O servidor guarda, de quem ativa lembretes, só o nome dos itens e os horários (isso aparece na nota de privacidade).
+
 ## Uso no dia a dia
 
 - **Dia**: toque numa dose para marcar (registra a hora atual). Toque numa dose marcada para corrigir o horário ou desmarcar. Use as setas para ir a dias anteriores e marcar retroativamente.
@@ -123,7 +130,8 @@ Os dados ficam no LocalStorage do app instalado. No iPhone, um PWA na Tela de In
 ## Custos (plano gratuito)
 
 - Cron a cada minuto ≈ 43 mil chamadas/mês, cada uma com 3 a 4 comandos no Redis ≈ 175 mil comandos/mês. O Upstash gratuito dá 500 mil/mês.
-- O servidor aceita no máximo 10 aparelhos inscritos (`MAX_SUBSCRIPTIONS` em `lib/server.js`), para ninguém lotar seu Redis.
+- O servidor aceita no máximo 100 aparelhos com lembretes (`MAX_SUBSCRIPTIONS` em `lib/server.js`). Quando lota, quem tenta ativar recebe um aviso e continua usando o app sem notificações.
+- Mais pessoas quase não aumentam o consumo do Redis: o cron lê todos os aparelhos num único comando, e cada lembrete enviado custa só mais um.
 
 ## Desenvolvimento
 
