@@ -6,10 +6,15 @@
   "description": "PWA para controlar doses diárias (remédios e suplementos) com lembretes por Web Push.",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "vapid": "web-push generate-vapid-keys"
+    "vapid": "web-push generate-vapid-keys",
+    "build:analytics": "esbuild public/analytics.js --bundle --minify --outfile=public/analytics.bundle.js --format=iife"
   },
   "dependencies": {
     "@upstash/redis": "^1.39.0",
+    "@vercel/analytics": "^2.0.1",
     "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }
